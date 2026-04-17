@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# SQLite 数据库（包含个人数据，不要上传）
+*.db
+
+# 家谱照片（个人隐私文件）
+photos/
+家谱导入模板.csv
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Log
+*.log
+
+# 临时文件
+*.tmp
+*.bak

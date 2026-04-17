@@ -12,7 +12,7 @@
 |------|------|
 | 📋 **成员管理** | 添加/编辑/删除家庭成员，支持性别、出生/去世日期、配偶、父母关系 |
 | 🌳 **世系图** | Canvas 绘制的树形图，节点含寸照，支持点击查看详情、放大缩小 |
-| 🖼️ **照片墙** | 上传/预览/删除家族照片，支持拖拽排序，支持导出顺序文件 |
+| 🖼️ **照片墙** | 上传照片、编辑编号/说明/关联成员，支持按编号排序，支持导出/导入顺序 JSON |
 | 📄 **数据导入导出** | CSV 批量导入导出，下载模板；HTML 整本输出（浏览器打印为 PDF） |
 | 🔢 **代次自动计算** | 根据父母关系自动计算代数，支持手动指定代次 |
 | 📖 **故事摘要** | 记录家族事迹、迁徙历史，支持关联成员或全局记录 |
@@ -90,7 +90,8 @@ family-tree-builder/
 │   ├── ui_tree.py         # 世系图绘制
 │   ├── ui_photo_wall.py  # 照片墙
 │   ├── io_csv.py          # CSV 导入/导出
-│   ├── io_html.py         # HTML 导出
+│   ├── io_html.py         # HTML 导出（按世代分组）
+│   ├── io_print.py        # 打印预览 HTML（浏览器 Ctrl+P 另存 PDF）
 │   └── main.py            # 程序入口
 ├── photos/                # 照片存放目录
 ├── family_tree.db         # SQLite 数据库（自动生成）
@@ -135,11 +136,11 @@ family-tree-builder/
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | id | INTEGER | 主键，自增 |
-| member_id | INTEGER | 关联成员 ID（可空） |
-| photo_path | TEXT | 照片路径 |
+| file_path | TEXT | 照片路径 |
 | caption | TEXT | 说明文字 |
-| upload_date | TEXT | 上传时间 |
-| sort_order | INTEGER | 排序顺序 |
+| member_id | INTEGER | 关联成员 ID（可空） |
+| sort_order | INTEGER | 排序顺序（编号） |
+| created_at | TEXT | 创建时间 |
 
 #### stories（故事摘要）
 
@@ -188,7 +189,7 @@ A lightweight, offline-first desktop application for building and visualizing fa
 **Key Features**:
 - Member management with family relationships (father, mother, spouses)
 - Interactive tree visualization with photos on nodes
-- Photo wall with drag-to-reorder support
+- Photo wall with numbered ordering and per-photo editing
 - CSV batch import/export, HTML full export
 - Auto generation calculation from parent-child relationships
 - Story summaries for family history
@@ -203,4 +204,4 @@ python family_tree/main.py
 
 ---
 
-*Last Updated: 2026-04-17 | Version: v2.4*
+*Last Updated: 2026-04-17 | Version: v2.6c*

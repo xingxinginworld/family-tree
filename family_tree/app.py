@@ -12,7 +12,7 @@ from .models import (
 
 
 )
-from . import ui_member, ui_tree, ui_photo_wall, ui_stories, io_csv, io_html, io_print
+from . import ui_member, ui_tree, ui_photo_wall, ui_stories, io_csv, io_print
 from . import fill_placeholder_images as fpi
 
 
@@ -371,10 +371,7 @@ class FamilyTreeApp:
     def restore_all_data(self):
         io_csv.restore_all(self)
 
-    # ── HTML ────────────────────────────────────────────────
-
-    def export_html(self):
-        io_html.export_html(self)
+    # ── 打印 ───────────────────────────────────────────────
 
     def show_print_preview(self):
         io_print.show_print_dialog(self)
@@ -419,7 +416,6 @@ class FamilyTreeApp:
         self._more_menu.add_command(label="导入故事", command=self.import_stories)
         self._more_menu.add_command(label="导出故事", command=self.export_stories)
         self._more_menu.add_separator()
-        self._more_menu.add_command(label="导出HTML", command=self.export_html)
         self._more_menu.add_command(label="打印预览", command=self.show_print_preview)
         self._more_menu.add_separator()
         self._more_menu.add_command(label="一键备份", command=self.backup_all_data)

@@ -41,3 +41,6 @@ bug清单.md
 *.pptx
 *.pdf
 family_tree.py
+
+# 工作记忆（不上传）
+.workbuddy/memory/

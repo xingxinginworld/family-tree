@@ -33,3 +33,11 @@ desktop.ini
 # 临时文件
 *.tmp
 *.bak
+
+# 个人文档（不上传）
+bug清单.md
+需求文档.md
+家谱程序TODO.md
+*.pptx
+*.pdf
+family_tree.py

@@ -235,31 +235,4 @@ family-tree/
 
 本项目基于 [MIT License](./LICENSE) 开源，欢迎 Fork、Star 和贡献。
 
----
-
-## 🌐 English Version
-
-### Family Tree Builder
-
-A lightweight, offline-first desktop application for building and visualizing family trees.
-
-**Key Features**:
-- Member management with family relationships (father, mother, spouses)
-- Interactive tree visualization with photos on nodes
-- Photo wall with drag-to-reorder and multi-member association
-- CSV batch import/export with template download
-- Print preview with A5 layout (browser Ctrl+P to PDF)
-- Story summaries for family history
-- One-click backup and restore
-
-**Stack**: Python 3.8+ · tkinter · SQLite · Pillow
-
-**Start**:
-```bash
-pip install Pillow
-python family_tree/main.py
-```
-
----
-
 *Last Updated: 2026-05-21 | Version: v2.6f*

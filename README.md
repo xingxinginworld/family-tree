@@ -1,117 +1,190 @@
 # 🪴 家谱制作工具 | Family Tree Builder
 
-> 一款轻量、离线、隐私优先的桌面家谱制作工具。支持成员管理、世系图可视化、照片墙、CSV 导入导出及 HTML/PDF 导出输出。数据完全存储在本地，无网络依赖。
+> 一款轻量、离线、隐私优先的桌面家谱制作工具。支持成员管理、世系图可视化、照片墙、CSV 批量导入导出及打印预览输出。数据完全存储在本地，无网络依赖。
 
 [English Below](#english-version)
 
 ---
 
-## ✨ 功能特色 | Features
+## ✨ 功能介绍
 
-| 模块 | 功能 |
-|------|------|
-| 📋 **成员管理** | 添加/编辑/删除家庭成员，支持性别、出生/去世日期、配偶、父母关系 |
-| 🌳 **世系图** | Canvas 绘制的树形图，节点含寸照，支持点击查看详情、放大缩小 |
-| 🖼️ **照片墙** | 支持多选上传照片、编辑编号/说明/关联成员，支持按编号排序，支持导出/导入顺序 JSON |
-| 📄 **数据导入导出** | CSV 批量导入导出，下载模板；HTML 整本输出（浏览器打印为 PDF） |
-| 🔢 **代次自动计算** | 根据父母关系自动计算代数，支持手动指定代次 |
-| 📖 **故事摘要** | 记录家族事迹、迁徙历史，支持关联成员或全局记录 |
+### 🧑‍🤝‍🧑 成员管理
+
+- **添加/编辑/删除**家庭成员，支持姓名、性别、出生与去世日期
+- 设置**父子、母子和配偶**关系，自动计算代次（始祖 = 第1代）
+- **批量删除**：勾选多个成员一键删除，删除前提示备份
+- **批量导入/导出**：通过 CSV 文件批量操作成员数据
+- 左侧成员列表支持**搜索**，选中后自动在家谱树上定位并居中显示
+
+### 🌳 世系图
+
+- Canvas 绘制的树形图，节点显示成员姓名、寸照和代次
+- 点击节点弹出**成员详情**，可编辑所有信息
+- 支持**放大、缩小、刷新、一键收起**操作
+- 收起后点击左侧成员可自动**展开祖先路径**并滚动居中
+
+### 🖼️ 照片管理
+
+- **照片墙**：上传家族照片，支持编辑编号、说明文字、关联成员（多对多）
+- 拖拽排序调整照片顺序，支持**导出/导入排序 JSON** 备份
+- **批量删除**：全选或勾选后批量删除照片
+- **占位填充**：检查 CSV 中寸照路径对应的图片文件是否存在，缺失时自动复制用户指定的占位图到该路径，支持 Dry-Run 预览模式，自动备份原 CSV
+
+### 📖 故事摘要
+
+- 记录家族事迹、迁徙历史等故事，支持关联特定成员或作为全局记录
+- 支持**导入/导出**故事数据，以及**批量删除**
+
+### 🖨️ 下载打印
+
+- **打印预览**：生成 A5 排版 HTML（封面 + 世系图 + 成员表 + 照片墙），在浏览器中 Ctrl+P 另存为 PDF
+
+### 💾 备份还原
+
+- **一键备份**：将数据库和照片目录打包为 ZIP 文件
+- **一键恢复**：从 ZIP 备份文件恢复全部数据
 
 ---
 
-## 🚀 快速开始 | Quick Start
+## 🚀 快速开始
 
-### 环境要求 | Requirements
+### 环境要求
 
 - Python 3.8+
 - Pillow（图片处理）
 
-### 安装 | Installation
+### 安装与启动
 
 ```bash
 # 克隆项目
-git clone https://github.com/your-username/family-tree-builder.git
-cd family-tree-builder
+git clone https://github.com/xingxinginworld/family-tree.git
+cd family-tree
 
 # 安装依赖
 pip install Pillow
 
-# 启动程序（两种方式均可）
+# 启动程序
 python family_tree/main.py
-# 或
-python -m family_tree.main
 ```
 
 > **首次运行**：`family_tree.db`（SQLite 数据库）和 `photos/`（照片目录）将自动创建。
 
 ---
 
-## 📖 使用说明 | User Guide
+## 📖 使用说明
 
 ### 界面布局
 
 ```
-┌─────────────────────────────────────────────┐
-│ 家谱制作工具          [+成员] [照片] [故事] [更多▼] │
-├────────┬────────────────────────────────────┤
-│ 成员列表 │  家谱树（点击节点查看详情）               │
-│ 🔍 搜索 │  [刷新] [放大] [缩小] [收起]           │
-│         │                                    │
-│ 👤 成员  │    ┌───┐                           │
-│         │    │祖父│← 第1代                     │
-│         │  ┌─┴───┴─┐                          │
-│         │  │父    │叔  ← 第2代                  │
-│         │┌─┴─┐   └─┐                          │
-│ [批量删除]││子 │   │   ← 第3代                  │
-└────────┴────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│ 家谱制作工具              [+成员] [照片] [故事] [更多▼] │
+├──────────┬──────────────────────────────────────┤
+│ 家族成员   │  家谱树（点击节点查看详情）              │
+│ ┌─搜索框─┐│  [刷新] [放大] [缩小] [收起]            │
+│ │        ││                                      │
+│  成员1    │       ┌───┐                           │
+│  成员2    │       │祖父│  ← 第1代                  │
+│  ...     │     ┌─┴───┴─┐                          │
+│          │     │父    │叔  ← 第2代                  │
+│          │   ┌─┴─┐   └─┐                          │
+│ [批量删除] │   │子 │   │    ← 第3代                  │
+└──────────┴──────────────────────────────────────┘
+
+「更多 ▼」下拉菜单：
+  导入模板 | 导入成员 | 导出成员
+  ─────────────────────────
+  导入故事 | 导出故事
+  ─────────────────────────
+  打印预览
+  ─────────────────────────
+  一键备份 | 一键恢复
+  ─────────────────────────
+  占位填充
 ```
 
-### 代次规则 | Generation Rules
+### 基本使用流程
 
-- **始祖** → generation = 1（第1代）
-- 子女 → 父辈 generation + 1
-- CSV 导入时若代次关系冲突（如子比父代数还小）则导入失败并提示
+**1. 添加成员**
+
+- 点击顶栏 `+成员` 按钮，填写姓名、性别、出生日期等信息
+- 通过"父亲""母亲""配偶"下拉框设置家族关系
+- 点击左侧列表中的成员可编辑已有信息
+
+**2. 批量导入（推荐）**
+
+- 点击 `更多▼` → `导入模板`，下载 CSV 模板
+- 在 Excel/WPS 中按模板格式填写成员信息
+- 点击 `更多▼` → `导入成员`，选择填好的 CSV 文件导入
+- 代次可留空（自动根据父子关系计算），也可手动指定
+
+**3. 查看家谱树**
+
+- 右侧自动显示世系图，点击节点查看/编辑成员详情
+- 左侧列表选中成员后，家谱树自动定位并居中
+- 使用 `放大`/`缩小` 调整视图，`收起` 折叠所有节点，`刷新` 重绘
+
+**4. 管理照片**
+
+- 点击顶栏 `照片` 打开照片墙，添加照片并编辑说明
+- 使用 `更多▼` → `占位填充` 批量处理缺失寸照：
+  1. 选择填好的成员 CSV 文件
+  2. 选择一张占位图（如默认头像）
+  3. 勾选 `Dry-Run` 可仅检查不修改
+  4. 点击 `检查并替换`，工具自动检测最后一列寸照路径，缺失的用占位图填充
+  5. 处理前自动备份原 CSV，完成后生成汇总报告
+
+**5. 导出与备份**
+
+- `更多▼` → `打印预览`：在浏览器中预览并 Ctrl+P 另存为 PDF
+- `更多▼` → `一键备份`：打包数据库和照片为 ZIP 文件
+- `更多▼` → `一键恢复`：从备份 ZIP 恢复数据
+
+### 代次规则
+
+- **始祖** → 第1代（generation = 1）
+- 子女 → 父辈代次 + 1
+- CSV 导入时若代次关系冲突（如子女代次不大于父母）则导入失败
 
 ### 照片路径
 
-- 程序接受**相对路径**（相对于程序根目录）或**绝对路径**
-- 建议将照片放在 `photos/` 子目录下，使用相对路径方便迁移
+- 支持**相对路径**（相对于程序根目录）或**绝对路径**
+- 建议将照片放在 `photos/` 子目录下，方便迁移
 
 ---
 
-## 🗂️ 项目结构 | Project Structure
+## 🗂️ 项目结构
 
 ```
-family-tree-builder/
+family-tree/
 ├── family_tree/
-│   ├── __init__.py        # 包标识
-│   ├── config.py          # 配置（数据库路径、照片目录）
-│   ├── db.py              # 数据库初始化与连接
-│   ├── models.py          # 数据模型 + CRUD 函数
-│   ├── app.py             # 主窗口（核心框架 + 成员列表）
-│   ├── ui_member.py       # 添加/编辑成员表单
-│   ├── ui_tree.py         # 世系图绘制
-│   ├── ui_photo_wall.py  # 照片墙
-│   ├── io_csv.py          # CSV 导入/导出
-│   ├── io_html.py         # HTML 导出（按世代分组）
-│   ├── io_print.py        # 打印预览 HTML（浏览器 Ctrl+P 另存 PDF）
-│   └── main.py            # 程序入口
-├── photos/                # 照片存放目录
-├── family_tree.db         # SQLite 数据库（自动生成）
-├── 家谱程序TODO.md         # 功能路线图
+│   ├── __init__.py                 # 包标识
+│   ├── config.py                   # 配置（数据库路径、照片目录）
+│   ├── db.py                       # 数据库初始化与连接
+│   ├── models.py                   # 数据模型 + CRUD 函数
+│   ├── app.py                      # 主窗口（布局、菜单、成员列表）
+│   ├── ui_member.py                # 添加/编辑成员表单
+│   ├── ui_tree.py                  # 世系图绘制（Canvas）
+│   ├── ui_photo_wall.py            # 照片墙（列表视图 + 拖拽排序）
+│   ├── ui_stories.py               # 故事摘要管理
+│   ├── io_csv.py                   # CSV 导入/导出 + 备份还原
+│   ├── io_print.py                 # 打印预览 HTML（A5 排版）
+│   ├── fill_placeholder_images.py  # 占位图填充工具
+│   └── main.py                     # 程序入口
+├── photos/                         # 照片存放目录（自动创建）
+├── family_tree.db                  # SQLite 数据库（自动创建）
 └── README.md
 ```
 
 ---
 
-## 🔧 开发指南 | Development
+## 🔧 开发指南
 
-### 架构说明
+### 技术栈
 
-- **GUI**：tkinter（Python 内置，无额外依赖）
+- **GUI**：tkinter（Python 内置）
 - **数据库**：SQLite 3（Python 内置）
-- **图片**：Pillow
-- **无网络请求**，所有数据存储在本地 `family_tree.db`
+- **图片处理**：Pillow
+- **无网络依赖**，所有数据存储在本地
 
 ### 数据库表结构
 
@@ -126,23 +199,22 @@ family-tree-builder/
 | death_date | TEXT | 去世日期（可空） |
 | father_id | INTEGER | 父亲 ID（可空） |
 | mother_id | INTEGER | 母亲 ID（可空） |
-| spouse1_id | INTEGER | 配偶1 ID（可空） |
-| spouse2_id | INTEGER | 配偶2 ID（可空） |
+| spouse_id | INTEGER | 配偶 ID（可空） |
 | bio | TEXT | 个人简介/备注 |
 | photo_path | TEXT | 寸照路径 |
 | extra_photos | TEXT | JSON 格式额外照片列表 |
 | generation | INTEGER | 代次（1=始祖起） |
 | sort_order | INTEGER | 同代排序序号 |
 
-#### wall_photos（照片墙）
+#### photo_wall（照片墙）
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | id | INTEGER | 主键，自增 |
 | file_path | TEXT | 照片路径 |
 | caption | TEXT | 说明文字 |
-| member_id | INTEGER | 关联成员 ID（可空） |
-| sort_order | INTEGER | 排序顺序（编号） |
+| member_ids | TEXT | JSON 格式，关联成员 ID 列表（多对多） |
+| sort_order | INTEGER | 排序顺序 |
 | created_at | TEXT | 创建时间 |
 
 #### stories（故事摘要）
@@ -157,29 +229,11 @@ family-tree-builder/
 | member_id | INTEGER | 关联成员 ID（可空，为全局记录） |
 | image_path | TEXT | 配图路径（可空） |
 
-### 运行测试
-
-```bash
-# 单元测试（数据库初始化）
-python -c "from family_tree.db import init_db; init_db(); print('OK')"
-
-# 模块导入测试
-python -c "import family_tree.app; print('OK')"
-```
-
 ---
 
-## 🛣️ 路线图 | Roadmap
-
-参见 [家谱程序TODO.md](./家谱程序TODO.md)，所有新增需求均记录于此。
-
----
-
-## 📄 开源协议 | License
+## 📄 开源协议
 
 本项目基于 [MIT License](./LICENSE) 开源，欢迎 Fork、Star 和贡献。
-
----
 
 ---
 
@@ -192,10 +246,11 @@ A lightweight, offline-first desktop application for building and visualizing fa
 **Key Features**:
 - Member management with family relationships (father, mother, spouses)
 - Interactive tree visualization with photos on nodes
-- Photo wall with numbered ordering and per-photo editing
-- CSV batch import/export, HTML full export
-- Auto generation calculation from parent-child relationships
+- Photo wall with drag-to-reorder and multi-member association
+- CSV batch import/export with template download
+- Print preview with A5 layout (browser Ctrl+P to PDF)
 - Story summaries for family history
+- One-click backup and restore
 
 **Stack**: Python 3.8+ · tkinter · SQLite · Pillow
 

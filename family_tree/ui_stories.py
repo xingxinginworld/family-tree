@@ -55,6 +55,14 @@ def open_stories_window(app):
 
     edit_btn.pack(side=tk.RIGHT, padx=3)
     del_btn.pack(side=tk.RIGHT, padx=3)
+
+    batch_del_btn = tk.Button(toolbar, text="批量删除", font=("微软雅黑", 9),
+                               command=lambda: _batch_delete_stories_dialog(app, win,
+                                   refresh_list, clear_preview),
+                               bg="#e74c3c", fg="white", cursor="hand2",
+                               relief=tk.FLAT, padx=10, pady=3)
+    batch_del_btn.pack(side=tk.RIGHT, padx=3)
+
     tk.Button(toolbar, text="+ 添加故事", font=("微软雅黑", 9, "bold"),
               command=lambda: _open_editor(win, app, None),
               bg="#27ae60", fg="white", cursor="hand2",
@@ -364,3 +372,89 @@ def open_stories_window(app):
             messagebox.showinfo("成功", "保存成功！")
 
     refresh_list()
+
+
+# ── 批量删除（独立弹窗）────────────────────────────────────────────
+
+def _batch_delete_stories_dialog(app, parent_win, refresh_list, clear_preview):
+    """批量删除故事弹窗（勾选→提醒备份→确认→删除）"""
+    stories = get_all_stories()
+    if not stories:
+        messagebox.showwarning("提示", "当前没有故事可删除")
+        return
+
+    dialog = tk.Toplevel(parent_win)
+    dialog.title("批量删除故事")
+    dialog.geometry("440x420")
+    dialog.transient(parent_win)
+    dialog.grab_set()
+
+    tk.Label(dialog, text="勾选要删除的故事：", font=("微软雅黑", 11, "bold"),
+             fg="#e74c3c").pack(anchor="w", padx=18, pady=(14, 4))
+
+    # 带复选框的滚动列表
+    list_frame = tk.Frame(dialog)
+    list_frame.pack(fill=tk.BOTH, expand=True, padx=18)
+    sb = tk.Scrollbar(list_frame)
+    sb.pack(side=tk.RIGHT, fill=tk.Y)
+    canvas = tk.Canvas(list_frame, borderwidth=0,
+                       highlightthickness=0, yscrollcommand=sb.set)
+    canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+    sb.config(command=canvas.yview)
+    inner = tk.Frame(canvas)
+    canvas.create_window((0, 0), window=inner, anchor="nw")
+
+    checkboxes = {}
+    member_map = {m.id: m.name for m in app.members}
+    for s in stories:
+        var = tk.BooleanVar(value=False)
+        member_name = member_map.get(s.member_id, "全局")
+        row = tk.Frame(inner)
+        row.pack(fill=tk.X, pady=2)
+        tk.Checkbutton(row, variable=var).pack(side=tk.LEFT)
+        tk.Label(row, text=f"{s.title}  [{member_name}]",
+                 font=("微软雅黑", 10)).pack(side=tk.LEFT, padx=4)
+        checkboxes[s.id] = var
+
+    inner.update_idletasks()
+    canvas.config(scrollregion=canvas.bbox("all"))
+
+    # 全选/取消全选
+    sel_frame = tk.Frame(dialog)
+    sel_frame.pack(fill=tk.X, padx=18, pady=(6, 0))
+
+    def toggle_all(select_all):
+        for var in checkboxes.values():
+            var.set(select_all)
+
+    tk.Button(sel_frame, text="全选", font=("微软雅黑", 9),
+              command=lambda: toggle_all(True)).pack(side=tk.LEFT, padx=2)
+    tk.Button(sel_frame, text="取消全选", font=("微软雅黑", 9),
+              command=lambda: toggle_all(False)).pack(side=tk.LEFT, padx=2)
+
+    result_label = tk.Label(dialog, text="", font=("微软雅黑", 9), fg="#888")
+    result_label.pack()
+
+    def do_delete():
+        if not messagebox.askyesno("⚠️ 重要提醒",
+            "批量删除不可撤销！\n\n建议先「备份」数据，确认已备份后再继续。\n\n是否已备份？"):
+            return
+        to_delete = [sid for sid, var in checkboxes.items() if var.get()]
+        if not to_delete:
+            messagebox.showwarning("提示", "请先勾选要删除的故事")
+            return
+        if not messagebox.askyesno("确认删除",
+            f"确定要删除已勾选的 {len(to_delete)} 条故事吗？\n\n此操作不可撤销！"):
+            return
+        for sid in to_delete:
+            delete_story(sid)
+        dialog.destroy()
+        refresh_list()
+        clear_preview()
+        messagebox.showinfo("完成", f"已删除 {len(to_delete)} 条故事")
+
+    btn_frame = tk.Frame(dialog)
+    btn_frame.pack(pady=12)
+    tk.Button(btn_frame, text="执行删除", font=("微软雅黑", 11),
+              command=do_delete, bg="#e74c3c", fg="white",
+              cursor="hand2", padx=16, pady=4).pack(side=tk.LEFT)

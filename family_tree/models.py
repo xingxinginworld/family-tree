@@ -40,6 +40,14 @@ class WallPhoto:
         self.caption = row[2]
         self.member_id = row[3]
         self.sort_order = row[4]
+        self.member_ids = json.loads(row[6]) if len(row) > 6 and row[6] else []
+
+    def get_member_ids(self):
+        """获取关联的所有成员 ID 列表"""
+        ids = list(self.member_ids) if self.member_ids else []
+        if self.member_id and self.member_id not in ids:
+            ids.append(self.member_id)
+        return ids
 
 
 def get_all_members():
@@ -75,38 +83,40 @@ def get_all_wall_photos():
 def save_member(data, member_id=None):
     """保存成员（新增或更新）"""
     conn = get_conn()
-    c = conn.cursor()
-    if member_id is None:
-        c.execute("""
-            INSERT INTO members (name, gender, birth_date, death_date, father_id,
-            mother_id, spouse1_id, spouse2_id, bio, photo_path, extra_photos, generation)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            data['name'], data.get('gender'), data.get('birth_date'),
-            data.get('death_date'), data.get('father_id'), data.get('mother_id'),
-            data.get('spouse1_id'), data.get('spouse2_id'),
-            data.get('bio'), data.get('photo_path'),
-            json.dumps(data.get('extra_photos', [])),
-            data.get('generation', 0)
-        ))
-    else:
-        c.execute("""
-            UPDATE members SET name=?, gender=?, birth_date=?, death_date=?,
-            father_id=?, mother_id=?, spouse1_id=?, spouse2_id=?, bio=?, photo_path=?,
-            extra_photos=?, generation=?
-            WHERE id=?
-        """, (
-            data['name'], data.get('gender'), data.get('birth_date'),
-            data.get('death_date'), data.get('father_id'), data.get('mother_id'),
-            data.get('spouse1_id'), data.get('spouse2_id'),
-            data.get('bio'), data.get('photo_path'),
-            json.dumps(data.get('extra_photos', [])),
-            data.get('generation', 0),
-            member_id
-        ))
-    conn.commit()
-    member_id_out = c.lastrowid if member_id is None else member_id
-    conn.close()
+    try:
+        c = conn.cursor()
+        if member_id is None:
+            c.execute("""
+                INSERT INTO members (name, gender, birth_date, death_date, father_id,
+                mother_id, spouse1_id, spouse2_id, bio, photo_path, extra_photos, generation)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                data['name'], data.get('gender'), data.get('birth_date'),
+                data.get('death_date'), data.get('father_id'), data.get('mother_id'),
+                data.get('spouse1_id'), data.get('spouse2_id'),
+                data.get('bio'), data.get('photo_path'),
+                json.dumps(data.get('extra_photos', [])),
+                data.get('generation', 0)
+            ))
+        else:
+            c.execute("""
+                UPDATE members SET name=?, gender=?, birth_date=?, death_date=?,
+                father_id=?, mother_id=?, spouse1_id=?, spouse2_id=?, bio=?, photo_path=?,
+                extra_photos=?, generation=?
+                WHERE id=?
+            """, (
+                data['name'], data.get('gender'), data.get('birth_date'),
+                data.get('death_date'), data.get('father_id'), data.get('mother_id'),
+                data.get('spouse1_id'), data.get('spouse2_id'),
+                data.get('bio'), data.get('photo_path'),
+                json.dumps(data.get('extra_photos', [])),
+                data.get('generation', 0),
+                member_id
+            ))
+        conn.commit()
+        member_id_out = c.lastrowid if member_id is None else member_id
+    finally:
+        conn.close()
     calc_generations()
     return member_id_out
 
@@ -114,14 +124,16 @@ def save_member(data, member_id=None):
 def delete_member(member_id):
     """删除成员"""
     conn = get_conn()
-    c = conn.cursor()
-    c.execute("UPDATE members SET father_id=NULL WHERE father_id=?", (member_id,))
-    c.execute("UPDATE members SET mother_id=NULL WHERE mother_id=?", (member_id,))
-    c.execute("UPDATE members SET spouse1_id=NULL WHERE spouse1_id=?", (member_id,))
-    c.execute("UPDATE members SET spouse2_id=NULL WHERE spouse2_id=?", (member_id,))
-    c.execute("DELETE FROM members WHERE id=?", (member_id,))
-    conn.commit()
-    conn.close()
+    try:
+        c = conn.cursor()
+        c.execute("UPDATE members SET father_id=NULL WHERE father_id=?", (member_id,))
+        c.execute("UPDATE members SET mother_id=NULL WHERE mother_id=?", (member_id,))
+        c.execute("UPDATE members SET spouse1_id=NULL WHERE spouse1_id=?", (member_id,))
+        c.execute("UPDATE members SET spouse2_id=NULL WHERE spouse2_id=?", (member_id,))
+        c.execute("DELETE FROM members WHERE id=?", (member_id,))
+        conn.commit()
+    finally:
+        conn.close()
     calc_generations()
 
 
@@ -201,60 +213,86 @@ def get_all_wall_photos_ordered():
 
 def calc_generations():
     """
-    计算所有成员的代次（generation）。
-    规则：generation = max(父亲的generation, 母亲的generation) + 1
-          无父无母（始祖）→ generation = 0
-    实现：迭代拓扑排序，无递归，无visited跨分支污染。
-          每次只处理"父母代次均已确定"的成员，逐层向外扩展。
+    计算所有成员的代次（generation）并写入数据库。
+    规则（1-based）：
+      - 无父无母（始祖）     → generation = 1
+      - 有父母               → max(父亲gen, 母亲gen) + 1
+      - 无父母 + 有配偶      → 配偶gen（迭代至稳定）
     """
     conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT id, father_id, mother_id FROM members")
-    members = {r[0]: (r[1], r[2]) for r in c.fetchall()}
-    conn.close()
+    try:
+        c = conn.cursor()
+        c.execute("SELECT id, father_id, mother_id, spouse1_id, spouse2_id FROM members")
+        rows = c.fetchall()
+    finally:
+        conn.close()
 
-    if not members:
+    if not rows:
         return
 
-    # gen_map: id -> generation（实时更新的内存映射）
-    gen_map = {}
-    # 初始：找出所有"无父且无母"的成员（始祖），generation = 0
-    ready = []
-    for mid, (fid, mid_id) in members.items():
-        if fid is None and mid_id is None:
-            gen_map[mid] = 0
-            ready.append(mid)
+    # 内存关系映射：id -> {father, mother, spouses}
+    rel = {}
+    for r in rows:
+        mid, fid, moid, sp1, sp2 = r
+        rel[mid] = {
+            "father": fid, "mother": moid,
+            "spouses": [s for s in (sp1, sp2) if s is not None],
+        }
 
-    # 迭代：每次处理一批"父母代次均已确定"的成员
-    while True:
-        new_ready = []
-        for mid, (fid, mid_id) in members.items():
+    gen_map = {}  # id -> generation
+
+    # ── 阶段1：父子代次计算（迭代拓扑排序）──
+    # 初始：无父无母 = 1（始祖）
+    for mid, info in rel.items():
+        if info["father"] is None and info["mother"] is None:
+            gen_map[mid] = 1
+
+    # 迭代处理「父母代次已知」的成员
+    changed = True
+    while changed:
+        changed = False
+        for mid, info in rel.items():
             if mid in gen_map:
-                continue  # 已处理
-            fid_gen = gen_map.get(fid) if fid is not None else None
-            mid_gen = gen_map.get(mid_id) if mid_id is not None else None
-            if fid_gen is None and mid_gen is None:
-                continue  # 父母都未知（孤立成员，等待后续处理）
-            parent_gens = [g for g in [fid_gen, mid_gen] if g is not None]
+                continue
+            parent_gens = []
+            if info["father"] is not None and info["father"] in gen_map:
+                parent_gens.append(gen_map[info["father"]])
+            if info["mother"] is not None and info["mother"] in gen_map:
+                parent_gens.append(gen_map[info["mother"]])
+            if not parent_gens:
+                continue
             gen_map[mid] = max(parent_gens) + 1
-            new_ready.append(mid)
+            changed = True
 
-        if not new_ready:
-            break  # 没有新成员被处理，退出
-        ready.extend(new_ready)
+    # ── 阶段2：配偶代次同步（迭代至稳定）──
+    # 无父母 + 有配偶 → 同步为配偶代次
+    changed = True
+    while changed:
+        changed = False
+        for mid, info in rel.items():
+            if mid not in gen_map:
+                continue
+            if info["father"] is not None or info["mother"] is not None:
+                continue  # 有父母者，代次由父子关系决定
+            for sp_id in info["spouses"]:
+                if sp_id in gen_map and gen_map[sp_id] != gen_map[mid]:
+                    gen_map[mid] = gen_map[sp_id]
+                    changed = True
 
-    # 处理孤岛成员（初始无父母、后续也无父母的成员）
-    for mid in members:
+    # ── 阶段3：孤岛成员（无父母无配偶）→ 1 ──
+    for mid in rel:
         if mid not in gen_map:
-            gen_map[mid] = 0
+            gen_map[mid] = 1
 
-    # 批量写回数据库
+    # ── 批量写回数据库 ──
     conn2 = get_conn()
-    c2 = conn2.cursor()
-    for mid, gen in gen_map.items():
-        c2.execute("UPDATE members SET generation=? WHERE id=?", (gen, mid))
-    conn2.commit()
-    conn2.close()
+    try:
+        c2 = conn2.cursor()
+        for mid, gen in gen_map.items():
+            c2.execute("UPDATE members SET generation=? WHERE id=?", (gen, mid))
+        conn2.commit()
+    finally:
+        conn2.close()
 
 
 # ── 故事摘要 ──────────────────────────────────────────────────

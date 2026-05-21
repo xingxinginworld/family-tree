@@ -68,13 +68,13 @@ def open_member_dialog(app, member_id=None):
     label("配偶").grid(row=row, column=0, sticky="e", pady=5)
     sp1_combo = ttk.Combobox(form, font=("微软雅黑", 10), width=23)
     sp1_vals = ["（无配偶）"] + [
-        f"{m.id}. {m.name}（{m.gender or '?'}，第{(m.generation or 0)+1}代）"
+        f"{m.id}. {m.name}（{m.gender or '?'}，第{(m.generation or 1)}代）"
         for m in app.members if m.id != member_id
     ]
     sp1_combo["values"] = sp1_vals
     if member and member.spouse1_id and member.spouse1_id in app.member_map:
         sp1_obj = app.member_map[member.spouse1_id]
-        sp1_combo.set(f"{member.spouse1_id}. {sp1_obj.name}（{sp1_obj.gender or '?'}，第{(sp1_obj.generation or 0)+1}代）")
+        sp1_combo.set(f"{member.spouse1_id}. {sp1_obj.name}（{sp1_obj.gender or '?'}，第{(sp1_obj.generation or 1)}代）")
     sp1_combo.grid(row=row, column=1, sticky="w", pady=5)
     row_end()
 
@@ -82,13 +82,13 @@ def open_member_dialog(app, member_id=None):
     label("配偶2").grid(row=row, column=0, sticky="e", pady=5)
     sp2_combo = ttk.Combobox(form, font=("微软雅黑", 10), width=23)
     sp2_vals = ["（无配偶）"] + [
-        f"{m.id}. {m.name}（{m.gender or '?'}，第{(m.generation or 0)+1}代）"
+        f"{m.id}. {m.name}（{m.gender or '?'}，第{(m.generation or 1)}代）"
         for m in app.members if m.id != member_id
     ]
     sp2_combo["values"] = sp2_vals
     if member and member.spouse2_id and member.spouse2_id in app.member_map:
         sp2_obj = app.member_map[member.spouse2_id]
-        sp2_combo.set(f"{member.spouse2_id}. {sp2_obj.name}（{sp2_obj.gender or '?'}，第{(sp2_obj.generation or 0)+1}代）")
+        sp2_combo.set(f"{member.spouse2_id}. {sp2_obj.name}（{sp2_obj.gender or '?'}，第{(sp2_obj.generation or 1)}代）")
     sp2_combo.grid(row=row, column=1, sticky="w", pady=5)
     row_end()
 
